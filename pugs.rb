@@ -3,12 +3,14 @@ require 'rest_client'
 require 'json'
 
 get '/' do
-  pug_content = JSON.parse(RestClient.get('http://pugme.herokuapp.com/bomb?count=100'))['pugs']
+  pug_urls = JSON.parse(RestClient.get('http://pugme.herokuapp.com/bomb?count=100'))['pugs']
     .select do |pug|
       pug =~ %r{^http://\d+.media.tumblr.com/[^>]*\..{3}$}
-    end.first(80).reduce '' do |memo, pug|
-      memo + %Q{<div style="background-image: url(#{pug})"></div>}
-    end
+    end.first(80)
+
+    pug_content = pug_urls.reduce([]) do |memo, pug|
+      memo << %Q{<div style="background-image: url(#{pug})"></div>}
+    end.join('')
 
   <<EOF
  <html>
@@ -21,6 +23,12 @@ get '/' do
         display: inline-block;
       }
    </style>
+   <meta property="og:url" content="http://pugbomb.chinigo.net/" />
+   <meta property="og:title" content="Pugbomb!" />
+   <meta property="og:description" content="Pugs! Pugs! Pugs!" />
+   <meta property="og:image" content="#{pug_urls.first}" />
+   <meta property="og:image:width" content="500" />
+   <meta property="og:image:height" content="500" />
  </head>
  <body>
    #{pug_content}
